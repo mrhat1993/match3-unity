@@ -348,13 +348,10 @@ namespace Lean.Touch
 				onSelect.Invoke(finger);
 			}
 
-			if (OnSelectGlobal != null)
-			{
-				OnSelectGlobal(this, finger);
-			}
+            OnSelectGlobal?.Invoke(this, finger);
 
-			// Make sure FingerUp is only registered once
-			LeanTouch.OnFingerUp -= FingerUp;
+            // Make sure FingerUp is only registered once
+            LeanTouch.OnFingerUp -= FingerUp;
 			LeanTouch.OnFingerUp += FingerUp;
 
 			// Make sure FingerSet is only registered once

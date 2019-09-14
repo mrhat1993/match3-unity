@@ -4,10 +4,12 @@ using UnityEngine;
 using MrHat.Utility;
 using Lean.Touch;
 using System;
+using DG.Tweening;
 
-//TODO: REWRITE CUPS MAPPING ON 2dim ARRAY!!!
 public class Cup : MonoBehaviour
 {
+    public (int, int) Index { get; set; } = (-1, -1);
+
     private LeanSelectable _thisLeanSelectable;
     private LeanSelectable ThisLeanSelectable
         => _thisLeanSelectable ? _thisLeanSelectable : (_thisLeanSelectable = GetComponent<LeanSelectable>());
@@ -15,12 +17,9 @@ public class Cup : MonoBehaviour
     private MeshRenderer _meshRenderer;
     private MeshRenderer MeshRenderer => _meshRenderer ? _meshRenderer : (_meshRenderer = GetComponentInChildren<MeshRenderer>());
 
-    private Dictionary<Utility.Side, Cup> _siblingsCups = new Dictionary<Utility.Side, Cup>();
-    public Dictionary<Utility.Side, Cup> SiblingsCups => _siblingsCups;
-
     private bool _selected = false;
     private LeanFinger _finger;
-    private Vector2 _sumDelta = Vector2.zero;
+    private Vector2 _fingerStartPosition = Vector2.zero;
 
     private void OnEnable()
     {
@@ -34,15 +33,16 @@ public class Cup : MonoBehaviour
         LeanSelectable.OnDeselectGlobal -= OnDeselect;
     }
 
-    private void OnSelect(LeanSelectable arg1, LeanFinger arg2)
+    private void OnSelect(LeanSelectable leanSelectable, LeanFinger leanFinger)
     {
-        if (arg1 != ThisLeanSelectable) return;
+        if (leanSelectable != ThisLeanSelectable) return;
 
         _selected = true;
-        _finger = arg2;
+        _finger = leanFinger;
+        _fingerStartPosition = _finger.ScreenPosition;
     }
 
-    private void OnDeselect(LeanSelectable arg1)
+    private void OnDeselect(LeanSelectable leanSelectable)
     {
         _selected = false;
     }
@@ -51,26 +51,12 @@ public class Cup : MonoBehaviour
     {
         if (!_selected) return;
 
-        var delta = _finger.ScreenDelta;
+        var delta = _finger.ScreenPosition - _fingerStartPosition;
 
-        _sumDelta += delta;
-        if (_sumDelta.magnitude < 1) return;
+        if (delta.magnitude < 50) return;
 
-        Utility.Side direction;
-        if (delta.x > delta.y)
-        {
-            if (delta.x > 0) direction = Utility.Side.Right;
-            else direction = Utility.Side.Left;
-        }
-        else
-        {
-            if (delta.y > 0) direction = Utility.Side.Up;
-            else direction = Utility.Side.Down;
-        }
-
-        Swap(direction);
+        Swap(Utility.GetSide(delta));
         ThisLeanSelectable.Deselect();
-        _sumDelta = Vector2.zero;
     }
 
     public void SetColor(Color color)
@@ -78,50 +64,38 @@ public class Cup : MonoBehaviour
         MeshRenderer.material.SetColor("_Color", color);
     }
 
-    public void Swap(Utility.Side direction)
+    public void Swap(Side direction)
     {
-        if (!SiblingsCups.ContainsKey(direction)) return;
-
-        var swapCap = SiblingsCups[direction];
-
-        var thisPos = transform.position;
-        var siblingPos = swapCap.transform.position;
-
-        transform.position = siblingPos;
-        swapCap.transform.position = thisPos;
-
-        var oppositeDirection = Utility.Side.Left;
+        var shelfIndex = Index.Item1;
+        var cupIndex = Index.Item2;
         switch (direction)
         {
-            case Utility.Side.Left:
-                oppositeDirection = Utility.Side.Right;
+            case Side.Left:
+                cupIndex = (Index.Item2 - 1) % ShelfContainer.CupsMap.GetLength(1);
                 break;
-            case Utility.Side.Right:
-                oppositeDirection = Utility.Side.Left;
+            case Side.Right:
+                cupIndex = (Index.Item2 + 1) % ShelfContainer.CupsMap.GetLength(1);
                 break;
-            case Utility.Side.Up:
-                oppositeDirection = Utility.Side.Down;
+            case Side.Up:
+                shelfIndex = Mathf.Clamp(Index.Item1 + 1, 0, ShelfContainer.CupsMap.GetLength(0) - 1);
                 break;
-            case Utility.Side.Down:
-                oppositeDirection = Utility.Side.Up;
+            case Side.Down:
+                shelfIndex = Mathf.Clamp(Index.Item1 - 1, 0, ShelfContainer.CupsMap.GetLength(0) - 1);
                 break;
         }
+        var swapWith = ShelfContainer.CupsMap[shelfIndex, cupIndex];
+        if (swapWith == this) return;
 
-        var sides = new[] { Utility.Side.Left, Utility.Side.Right, Utility.Side.Down, Utility.Side.Up };
-        for (var i = 0; i < sides.Length; i++)
-        {
-            if (sides[i] == oppositeDirection || sides[i] == direction) continue;
+        var thisPos = transform.position;
+        var swapWithPos = swapWith.transform.position;
+        transform.DOMove(swapWithPos, 0.3f);
+        swapWith.transform.DOMove(thisPos, 0.3f);
 
-            if (!SiblingsCups.ContainsKey(sides[i])) SiblingsCups.Add(sides[i], null);
-            if (!swapCap.SiblingsCups.ContainsKey(sides[i])) swapCap.SiblingsCups.Add(sides[i], null);
-            var temp = SiblingsCups[sides[i]];
-            SiblingsCups[sides[i]] = swapCap.SiblingsCups[sides[i]];
-            swapCap.SiblingsCups[sides[i]] = temp;
-        }
+        ShelfContainer.CupsMap[Index.Item1, Index.Item2] = swapWith;
+        ShelfContainer.CupsMap[shelfIndex, cupIndex] = this;
 
-        if (!SiblingsCups.ContainsKey(oppositeDirection)) SiblingsCups.Add(oppositeDirection, null);
-        SiblingsCups[oppositeDirection] = swapCap;
-        swapCap.SiblingsCups[direction] = this;
-
+        var temp = Index;
+        Index = swapWith.Index;
+        swapWith.Index = temp;
     }
 }

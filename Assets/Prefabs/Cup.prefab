@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 9210755957852259580}
   - component: {fileID: 9063636614560385185}
   - component: {fileID: 7518983922159398735}
-  - component: {fileID: 3724034862093595322}
+  - component: {fileID: 2178513238992545549}
   m_Layer: 0
   m_Name: Cup
   m_TagString: Untagged
@@ -90,7 +90,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2032906413896736173}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4eda371e5375f454490a86f21559ee38, type: 3}
   m_Name: 
@@ -100,8 +100,8 @@ MonoBehaviour:
   RequiredFingerCount: 0
   RequiredSelectable: {fileID: 0}
   Camera: {fileID: 0}
---- !u!136 &3724034862093595322
-CapsuleCollider:
+--- !u!65 &2178513238992545549
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -110,10 +110,9 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+  serializedVersion: 2
+  m_Size: {x: 0.4, y: 0.6, z: 0.4}
+  m_Center: {x: 0, y: 0.3, z: 0}
 --- !u!1 &5631975578422818671
 GameObject:
   m_ObjectHideFlags: 0

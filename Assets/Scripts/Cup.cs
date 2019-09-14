@@ -8,7 +8,10 @@ using DG.Tweening;
 
 public class Cup : MonoBehaviour
 {
+    public static event Action<Cup, Cup> OnCupsSwapCompleted = delegate { };
+
     public (int, int) Index { get; set; } = (-1, -1);
+    public CupColor Color { get; set; }
 
     private LeanSelectable _thisLeanSelectable;
     private LeanSelectable ThisLeanSelectable
@@ -59,9 +62,10 @@ public class Cup : MonoBehaviour
         ThisLeanSelectable.Deselect();
     }
 
-    public void SetColor(Color color)
+    public void SetColor(CupColor color)
     {
-        MeshRenderer.material.SetColor("_Color", color);
+        Color = color;
+        MeshRenderer.material.SetColor("_Color", Utility.GetColor(color));
     }
 
     public void Swap(Side direction)
@@ -88,8 +92,17 @@ public class Cup : MonoBehaviour
 
         var thisPos = transform.position;
         var swapWithPos = swapWith.transform.position;
-        transform.DOMove(swapWithPos, 0.3f);
-        swapWith.transform.DOMove(thisPos, 0.3f);
+
+        var moveSequence = DOTween.Sequence()
+            .Append(transform.DOMove(swapWithPos, 0.3f)
+                .OnStart(() =>
+                {
+                    swapWith.transform.DOMove(thisPos, 0.3f);
+                }))
+            .OnComplete(() =>
+            {
+                OnCupsSwapCompleted(this, swapWith);
+            });
 
         ShelfContainer.CupsMap[Index.Item1, Index.Item2] = swapWith;
         ShelfContainer.CupsMap[shelfIndex, cupIndex] = this;

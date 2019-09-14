@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MrHat.Utility;
 
 public class ShelfContainer : MonoBehaviour
 {
@@ -17,6 +18,16 @@ public class ShelfContainer : MonoBehaviour
 
     private bool _ignoreStartedOverGui = true;
     private bool _ignoreIsOverGui = false;
+
+    private void OnEnable()
+    {
+        Cup.OnCupsSwapCompleted += CheckMatches;
+    }
+
+    private void OnDisable()
+    {
+        Cup.OnCupsSwapCompleted -= CheckMatches;
+    }
 
     protected virtual void Start()
     {
@@ -49,5 +60,20 @@ public class ShelfContainer : MonoBehaviour
         var magnitude = firstFinger.ScreenDelta.magnitude;
 
         transform.Rotate(Vector3.down, direction * magnitude, Space.Self);
+    }
+
+    public static void CheckMatches(Cup first, Cup second)
+    {
+        var firstCups = first.GetNearCups();
+        foreach (var cup in firstCups)
+        {
+            cup.transform.localScale = 0.1f * Vector3.one;
+        }
+
+        var secondCups = second.GetNearCups();
+        foreach (var cup in secondCups)
+        {
+            cup.transform.localScale = 0.1f * Vector3.one;
+        }
     }
 }

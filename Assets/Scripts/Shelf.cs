@@ -10,7 +10,6 @@ public class Shelf : MonoBehaviour
     [SerializeField] private int cupsCount = 15;
     [SerializeField] private Cup cupPrefab;
 
-    private Color[] _colors = new[] { Color.red, Color.green, Color.blue };
     private List<Cup> _cups = new List<Cup>();
     public List<Cup> Cups => _cups;
 
@@ -29,7 +28,8 @@ public class Shelf : MonoBehaviour
             var y = spawnRadius * Mathf.Sin(angle);
             var cupPosition = new Vector3(x, 0, y) + transform.position;
             var cup = Instantiate(cupPrefab, cupPosition, Quaternion.identity, transform);
-            cup.SetColor(_colors[Random.Range(0, _colors.Length)]);
+            var colors = (CupColor[])System.Enum.GetValues(typeof(CupColor));
+            cup.SetColor(colors[Random.Range(0,colors.Length)]);
             Cups.Add(cup);
         }
     }

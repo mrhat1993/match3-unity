@@ -116,6 +116,16 @@ namespace MrHat.Utility
             if(cupsInRow < 3) outCups.Clear();
             return outCups;
         }
+
+        public static void CheckMatches(this Cup thisCup)
+        {
+            var nearCups = thisCup.GetNearCups();
+            while(nearCups.Count > 0)
+            {
+                Object.Destroy(nearCups[0]);
+                nearCups.RemoveAt(0);
+            }
+        }
     }
 
     public enum Side

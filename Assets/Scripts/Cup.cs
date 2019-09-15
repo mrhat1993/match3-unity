@@ -45,10 +45,7 @@ public class Cup : MonoBehaviour
         _fingerStartPosition = _finger.ScreenPosition;
     }
 
-    private void OnDeselect(LeanSelectable leanSelectable)
-    {
-        _selected = false;
-    }
+    private void OnDeselect(LeanSelectable leanSelectable) => _selected = false;
 
     private void Update()
     {

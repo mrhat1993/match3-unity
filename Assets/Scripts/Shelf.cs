@@ -5,16 +5,15 @@ using MrHat.Utility;
 
 public class Shelf : MonoBehaviour
 {
-    private List<Cup> _cups = new List<Cup>();
-    public List<Cup> Cups => _cups;
+    public Cup[] Cups { get; private set; }
 
-    private void Start() 
-    {
-    }
+    public Vector3[] CupsPositions { get; private set; }
 
     public void SpawnCups()
     {
         var angleStep = 360 / ShelfContainer.CupsCount;
+        Cups = new Cup[ShelfContainer.CupsCount];
+        CupsPositions = new Vector3[ShelfContainer.CupsCount];
 
         for (var i = 0; i < 360; i += angleStep)
         {
@@ -24,8 +23,9 @@ public class Shelf : MonoBehaviour
             var cupPosition = new Vector3(x, 0, y) + transform.position;
             var cup = Instantiate(ShelfContainer.CupPrefab, cupPosition, Quaternion.identity, transform);
             var colors = (CupColor[])System.Enum.GetValues(typeof(CupColor));
-            cup.SetColor(colors[Random.Range(0,colors.Length)]);
-            Cups.Add(cup);
+            cup.SetColor(colors[Random.Range(0, colors.Length)]);
+            Cups[i / angleStep] = cup;
+            CupsPositions[i / angleStep] = cup.transform.localPosition;
         }
     }
 }

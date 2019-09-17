@@ -32,99 +32,29 @@ namespace MrHat.Utility
             }
         }
 
-        public static List<Cup> GetNearCups(this Cup startCup)
+        public static void GetNearCups(this Cup startCup, ref Cup prevCup, ref HashSet<Cup> watchedCups, ref List<Cup> nearCups)
         {
-            var outCups = new List<Cup>() { startCup };
-
-            var cupsInRow = 1;
-            //LEFT
-            var checkIndex = (startCup.Index.Item2 - 1) % ShelfContainer.CupsMap.GetLength(1);
-            while (true)
+            if (watchedCups.Contains(startCup)) return;
+            else
             {
-                var checkCup = ShelfContainer.CupsMap[startCup.Index.Item1, checkIndex];
-                if (checkCup.Color == startCup.Color)
-                {
-                    if (!outCups.Contains(checkCup))
-                    {
-                        outCups.Add(checkCup);
-                        checkIndex = (checkIndex - 1) % ShelfContainer.CupsMap.GetLength(1);
-                        cupsInRow++;
-                    }
-                    else break;
-                }
-                else break;
+                watchedCups.Add(startCup);
+
+                if (prevCup.Color != startCup.Color) return;
+                else nearCups.Add(startCup);
             }
 
-            //RIGHT
-            checkIndex = (startCup.Index.Item2 + 1) % ShelfContainer.CupsMap.GetLength(1);
-            while (true)
-            {
-                var checkCup = ShelfContainer.CupsMap[startCup.Index.Item1, checkIndex];
-                if (checkCup.Color == startCup.Color)
-                {
-                    if (!outCups.Contains(checkCup))
-                    {
-                        outCups.Add(checkCup);
-                        checkIndex = (checkIndex + 1) % ShelfContainer.CupsMap.GetLength(1);
-                        cupsInRow++;
-                    }
-                    else break;
-                }
-                else break;
-            }
+            var i = startCup.Index.Item1;
+            var j = startCup.Index.Item2;
 
-            if(cupsInRow <3) cupsInRow = 1;
+            var left = ShelfContainer.CupsMap[i, (j - 1 + ShelfContainer.CupsCount) % ShelfContainer.CupsCount];
+            var right = ShelfContainer.CupsMap[i, (j + 1) % ShelfContainer.CupsCount];
+            var up = i < ShelfContainer.Shelves.Count - 1 ? ShelfContainer.CupsMap[i + 1, j] : null;
+            var down = i > 0 ? ShelfContainer.CupsMap[i - 1, j] : null;
 
-            //UP
-            checkIndex = (startCup.Index.Item1 + 1);
-            while (true)
-            {
-                if (checkIndex >= ShelfContainer.CupsMap.GetLength(0)) break;
-                var checkCup = ShelfContainer.CupsMap[checkIndex, startCup.Index.Item2];
-                if (checkCup.Color == startCup.Color)
-                {
-                    if (!outCups.Contains(checkCup))
-                    {
-                        outCups.Add(checkCup);
-                        checkIndex += 1;
-                        cupsInRow++;
-                    }
-                    else break;
-                }
-                else break;
-            }
-
-            //DOWN
-            checkIndex = (startCup.Index.Item1 - 1);
-            while (true)
-            {
-                if (checkIndex < 0) break;
-                var checkCup = ShelfContainer.CupsMap[checkIndex, startCup.Index.Item2];
-                if (checkCup.Color == startCup.Color)
-                {
-                    if (!outCups.Contains(checkCup))
-                    {
-                        outCups.Add(checkCup);
-                        checkIndex -= 1;
-                        cupsInRow++;
-                    }
-                    else break;
-                }
-                else break;
-            }
-
-            if(cupsInRow < 3) outCups.Clear();
-            return outCups;
-        }
-
-        public static void CheckMatches(this Cup thisCup)
-        {
-            var nearCups = thisCup.GetNearCups();
-            while(nearCups.Count > 0)
-            {
-                Object.Destroy(nearCups[0]);
-                nearCups.RemoveAt(0);
-            }
+            if (left) left.GetNearCups(ref startCup, ref watchedCups, ref nearCups);
+            if (right) right.GetNearCups(ref startCup, ref watchedCups, ref nearCups);
+            if (up) up.GetNearCups(ref startCup, ref watchedCups, ref nearCups);
+            if (down) down.GetNearCups(ref startCup, ref watchedCups, ref nearCups);
         }
     }
 

@@ -20,6 +20,9 @@ public class Cup : MonoBehaviour
     private MeshRenderer _meshRenderer;
     private MeshRenderer MeshRenderer => _meshRenderer ? _meshRenderer : (_meshRenderer = GetComponentInChildren<MeshRenderer>());
 
+    private Collider _collider;
+    public Collider Collider => _collider ? _collider : (_collider = GetComponent<Collider>());
+
     private bool _selected = false;
     private LeanFinger _finger;
     private Vector2 _fingerStartPosition = Vector2.zero;

@@ -14,8 +14,10 @@ public class ShelfContainer : MonoBehaviour
     [SerializeField] private int cupsCount = 15;
 
     private static ShelfContainer _instance;
-    private static ShelfContainer Instance => 
+    private static ShelfContainer Instance =>
         _instance ? _instance : _instance = FindObjectOfType<ShelfContainer>();
+
+    public static List<Shelf> Shelves => Instance._shelves;
 
     public static Cup[,] CupsMap { get; set; }
 
@@ -39,19 +41,19 @@ public class ShelfContainer : MonoBehaviour
 
     protected virtual void Start()
     {
-        for (var i = 0; i < _shelves.Count; i++)
+        for (var i = 0; i < Shelves.Count; i++)
         {
-            _shelves[i].SpawnCups();
+            Shelves[i].SpawnCups();
         }
 
-        CupsMap = new Cup[_shelves.Count, _shelves[0].Cups.Count];
+        CupsMap = new Cup[Shelves.Count, Shelves[0].Cups.Length];
 
         for (var i = 0; i < CupsMap.GetLength(0); i++)
         {
             for (var j = 0; j < CupsMap.GetLength(1); j++)
             {
-                CupsMap[i, j] = _shelves[i].Cups[j];
-                _shelves[i].Cups[j].Index = (i, j);
+                CupsMap[i, j] = Shelves[i].Cups[j];
+                Shelves[i].Cups[j].Index = (i, j);
             }
         }
     }
@@ -72,9 +74,40 @@ public class ShelfContainer : MonoBehaviour
 
     public static void CheckMatches(Cup first, Cup second)
     {
-        first.CheckMatches();
-        second.CheckMatches();
+        DestroyMatches();
         FillShelves();
+    }
+
+    public static void DestroyMatches()
+    {
+        var cupsToDestroy = new List<Cup>();
+        var watchedCups = new HashSet<Cup>();
+
+        var i = 0;
+        var j = 0;
+
+        while (watchedCups.Count < Shelves.Count * CupsCount)
+        {
+            var watchCup = CupsMap[i, j];
+            watchCup.GetNearCups(ref watchCup, ref watchedCups, ref cupsToDestroy);
+
+            j++;
+            if(j >= CupsCount)
+            {
+                i++;
+                j = 0;
+
+                if (i >= Shelves.Count) break;
+            }
+        }
+
+        Debug.Log(cupsToDestroy.Count);
+        while (cupsToDestroy.Count > 0)
+        {
+            CupsMap[cupsToDestroy[0].Index.Item1, cupsToDestroy[0].Index.Item2] = null;
+            Destroy(cupsToDestroy[0].gameObject);
+            cupsToDestroy.RemoveAt(0);
+        }
     }
 
     public static void FillShelves()
@@ -83,38 +116,37 @@ public class ShelfContainer : MonoBehaviour
         {
             for (var j = 0; j < CupsMap.GetLength(1); j++)
             {
-                if(CupsMap[i,j] == null)
+                if (CupsMap[i, j] != null) continue;
+
+                Cup cupToMove = null;
+                for (var k = i + 1; k < CupsMap.GetLength(0); k++)
                 {
-                    Cup cupToMove = null;
-                    for (var k = i+1; k < CupsMap.GetLength(0); k++)
+                    if (CupsMap[k, j] != null)
                     {
-                        if(CupsMap[k,j]!=null)
-                        {
-                            cupToMove = CupsMap[k, j];
-                            break;
-                        }
+                        cupToMove = CupsMap[k, j];
+                        break;
                     }
-
-                    if (!cupToMove)
-                    {
-                        var angleStep = 360 / CupsCount;
-
-                        var angle = j * angleStep * Mathf.Deg2Rad;
-
-                        var x = SpawnRadius * Mathf.Cos(angle);
-                        var y = SpawnRadius * Mathf.Sin(angle);
-
-                        var shelf = Instance._shelves[i].transform;
-                        var cupPosition = new Vector3(x, 10, y) + shelf.position;
-                        var cup = Instantiate(CupPrefab, cupPosition, Quaternion.identity, shelf.transform);
-                        var colors = (CupColor[])System.Enum.GetValues(typeof(CupColor));
-                        cup.SetColor(colors[Random.Range(0, colors.Length)]);
-                        cupToMove = cup;
-                    }
-
-                    CupsMap[i, j] = cupToMove;
-                    cupToMove.transform.DOMove(cupToMove.transform.position + Vector3.down * 10f, 1f);
                 }
+
+                var destinationPosition = Shelves[i].CupsPositions[j];
+                if (!cupToMove)
+                {
+                    var spawnPosition = destinationPosition;
+                    spawnPosition.y = 10f;
+                    var cup = Instantiate(CupPrefab, spawnPosition, Quaternion.identity, Shelves[i].transform);
+                    var colors = (CupColor[])System.Enum.GetValues(typeof(CupColor));
+                    cup.SetColor(colors[Random.Range(0, colors.Length)]);
+                    cupToMove = cup;
+                }
+                else
+                {
+                    CupsMap[cupToMove.Index.Item1, cupToMove.Index.Item2] = null;
+                }
+
+                CupsMap[i, j] = cupToMove;
+                cupToMove.transform.parent = Shelves[i].transform;
+                cupToMove.transform.DOLocalMove(destinationPosition, 0.5f);
+
             }
         }
     }

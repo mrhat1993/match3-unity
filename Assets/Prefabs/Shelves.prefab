@@ -52,8 +52,10 @@ MonoBehaviour:
   - {fileID: 9069270776065770811}
   - {fileID: 9069270776668462099}
   - {fileID: 9069270776209598380}
-  RequiredFingerCount: 0
-  RequiredSelectable: {fileID: 0}
+  spawnRadius: 2.1
+  cupPrefab: {fileID: 9210755957852259580, guid: e698442d289368e46b470e383a1c8f12,
+    type: 3}
+  cupsCount: 15
 --- !u!1001 &3363616116955434310
 PrefabInstance:
   m_ObjectHideFlags: 0
